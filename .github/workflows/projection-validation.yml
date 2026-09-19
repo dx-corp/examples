@@ -42,7 +42,7 @@ jobs:
           mkdir -p "$tree"
           git archive --format=tar HEAD | tar -xf - -C "$tree"
           test -f "$tree/LICENSE"
-          test -f "$tree/scripts/projections/distribution-validation.mjs"
+          test -f "$tree/scripts/distribution-validation.mjs"
           echo "tree=$tree" >> "$GITHUB_OUTPUT"
       - name: Build SDK artifacts from matching public projections
         if: steps.projection.outputs.present == 'true'
@@ -96,4 +96,4 @@ jobs:
           DEIXIC_EXAMPLES_PYTHON_WHEEL: ${{ steps.sdk.outputs.python_wheel }}
         run: |
           set -euo pipefail
-          node "${{ steps.examples.outputs.tree }}/scripts/projections/distribution-validation.mjs" --name examples --target "${{ steps.examples.outputs.tree }}"
+          node "${{ steps.examples.outputs.tree }}/scripts/distribution-validation.mjs" --name examples --target "${{ steps.examples.outputs.tree }}"
