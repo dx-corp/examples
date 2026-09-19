@@ -1,0 +1,107 @@
+name: Projection validation
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Inspect projection state
+        id: projection
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f .repository-projection.json ]]; then
+            echo 'present=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo 'present=false' >> "$GITHUB_OUTPUT"
+          unexpected="$(find . -mindepth 1 \( -path './.git' -o -path './.github' \) -prune -o \( -path './README.md' -o -path './SECURITY.md' -o -path './CONTRIBUTING.md' -o -path './CODEOWNERS' \) -prune -o -print)"
+          if [[ -n "$unexpected" ]]; then
+            printf 'Projection payload exists without provenance:\n%s\n' "$unexpected" >&2
+            exit 1
+          fi
+          echo 'Projection payload has not landed; validated the destination-owned bootstrap tree.'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: steps.projection.outputs.present == 'true'
+        with:
+          node-version: 22.23.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        if: steps.projection.outputs.present == 'true'
+        with:
+          python-version: 3.12.12
+      - name: Archive the projected examples tree
+        if: steps.projection.outputs.present == 'true'
+        id: examples
+        run: |
+          set -euo pipefail
+          tree="$RUNNER_TEMP/examples-projection"
+          mkdir -p "$tree"
+          git archive --format=tar HEAD | tar -xf - -C "$tree"
+          test -f "$tree/LICENSE"
+          test -f "$tree/scripts/projections/distribution-validation.mjs"
+          echo "tree=$tree" >> "$GITHUB_OUTPUT"
+      - name: Build SDK artifacts from matching public projections
+        if: steps.projection.outputs.present == 'true'
+        id: sdk
+        env:
+          EXAMPLES_TREE: ${{ steps.examples.outputs.tree }}
+        run: |
+          set -euo pipefail
+          node_sdk="$RUNNER_TEMP/deixic-node"
+          python_sdk="$RUNNER_TEMP/deixic-python"
+          artifacts="$RUNNER_TEMP/sdk-artifacts"
+          git clone --filter=blob:none --depth=1 https://github.com/dx-corp/deixic-node.git "$node_sdk"
+          git clone --filter=blob:none --depth=1 https://github.com/dx-corp/deixic-python.git "$python_sdk"
+          test -f "$node_sdk/.repository-projection.json"
+          test -f "$python_sdk/.repository-projection.json"
+          test -f "$node_sdk/sdk/deixic/typescript/package-lock.json"
+          test -f "$python_sdk/pyproject.toml"
+          EXAMPLES_TREE="$EXAMPLES_TREE" NODE_SDK="$node_sdk" PYTHON_SDK="$python_sdk" node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          import { join } from 'node:path';
+          const load = (root) => JSON.parse(readFileSync(join(root, '.repository-projection.json'), 'utf8'));
+          const examples = load(process.env.EXAMPLES_TREE);
+          if (examples.projection !== 'examples' || examples.sourceRepository !== 'dx-corp/mono') throw new Error('invalid examples provenance');
+          for (const [root, projection] of [[process.env.NODE_SDK, 'deixic-node'], [process.env.PYTHON_SDK, 'deixic-python']]) {
+            const sdk = load(root);
+            if (sdk.projection !== projection || sdk.sourceRepository !== 'dx-corp/mono' || sdk.destinationRepository !== `dx-corp/${projection}`) throw new Error(`invalid ${projection} provenance`);
+            if (sdk.sourceSha !== examples.sourceSha) throw new Error(`${projection} source revision does not match examples`);
+          }
+          NODE
+          printf 'deixic-node checkout: %s\n' "$(git -C "$node_sdk" rev-parse HEAD)"
+          printf 'deixic-python checkout: %s\n' "$(git -C "$python_sdk" rev-parse HEAD)"
+          mkdir -p "$artifacts"
+          (
+            cd "$node_sdk/sdk/deixic/typescript"
+            npm ci --ignore-scripts --no-audit --no-fund
+            npm pack --json --pack-destination "$artifacts"
+          )
+          python -m venv "$RUNNER_TEMP/sdk-build-venv"
+          "$RUNNER_TEMP/sdk-build-venv/bin/python" -m pip install --disable-pip-version-check build==1.6.1
+          "$RUNNER_TEMP/sdk-build-venv/bin/python" -m build --wheel --outdir "$artifacts" "$python_sdk"
+          node_package="$(find "$artifacts" -maxdepth 1 -type f -name '*.tgz' -print -quit)"
+          python_wheel="$(find "$artifacts" -maxdepth 1 -type f -name '*.whl' -print -quit)"
+          test -n "$node_package"
+          test -n "$python_wheel"
+          echo "node_package=$node_package" >> "$GITHUB_OUTPUT"
+          echo "python_wheel=$python_wheel" >> "$GITHUB_OUTPUT"
+      - name: Validate the projected distribution
+        if: steps.projection.outputs.present == 'true'
+        env:
+          DEIXIC_EXAMPLES_NODE_PACKAGE: ${{ steps.sdk.outputs.node_package }}
+          DEIXIC_EXAMPLES_PYTHON_WHEEL: ${{ steps.sdk.outputs.python_wheel }}
+        run: |
+          set -euo pipefail
+          node "${{ steps.examples.outputs.tree }}/scripts/projections/distribution-validation.mjs" --name examples --target "${{ steps.examples.outputs.tree }}"
