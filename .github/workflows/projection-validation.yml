@@ -19,7 +19,9 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Test projection state gate
-        run: bash .github/scripts/inspect-projection-state.test.sh
+        run: |
+          bash .github/scripts/inspect-projection-state.test.sh
+          bash .github/scripts/checkout-matching-projection.test.sh
       - name: Inspect projection state
         id: projection
         env:
@@ -54,8 +56,11 @@ jobs:
           node_sdk="$RUNNER_TEMP/deixic-node"
           python_sdk="$RUNNER_TEMP/deixic-python"
           artifacts="$RUNNER_TEMP/sdk-artifacts"
-          git clone --filter=blob:none --depth=1 https://github.com/dx-corp/deixic-node.git "$node_sdk"
-          git clone --filter=blob:none --depth=1 https://github.com/dx-corp/deixic-python.git "$python_sdk"
+          source_sha="$(node -e 'const r=require(process.argv[1]); process.stdout.write(r.sourceSha)' "$EXAMPLES_TREE/.repository-projection.json")"
+          bash .github/scripts/checkout-matching-projection.sh \
+            https://github.com/dx-corp/deixic-node.git deixic-node "$source_sha" "$node_sdk"
+          bash .github/scripts/checkout-matching-projection.sh \
+            https://github.com/dx-corp/deixic-python.git deixic-python "$source_sha" "$python_sdk"
           test -f "$node_sdk/.repository-projection.json"
           test -f "$python_sdk/.repository-projection.json"
           test -f "$node_sdk/sdk/deixic/typescript/package-lock.json"
