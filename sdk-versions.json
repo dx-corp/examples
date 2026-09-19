@@ -1,0 +1,10 @@
+{
+  "typescript": {
+    "package": "@evalops/deixic-sdk",
+    "version": "0.1.2"
+  },
+  "python": {
+    "package": "deixic-sdk",
+    "version": "0.1.3"
+  }
+}
