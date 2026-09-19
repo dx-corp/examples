@@ -8,7 +8,7 @@ answer whose facts reference their source records.
 ## TypeScript
 
 ```sh
-npm install /path/to/evalops-deixic-sdk-0.1.2.tgz
+npm install /path/to/evalops-deixic-sdk-0.1.4.tgz
 export DEIXIC_API_KEY=...
 export DEIXIC_ORGANIZATION_ID=...
 export DEIXIC_WORKSPACE_ID=...
@@ -23,7 +23,7 @@ node examples/account-brief.mjs resume checkpoint.json --progress
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install /path/to/deixic_sdk-0.1.3-py3-none-any.whl
+python -m pip install /path/to/deixic_sdk-0.1.5-py3-none-any.whl
 export DEIXIC_API_KEY=...
 export DEIXIC_ORGANIZATION_ID=...
 export DEIXIC_WORKSPACE_ID=...
@@ -50,7 +50,7 @@ artifacts before running the live examples' local configuration boundary. It
 does not send a Deixic request:
 
 ```sh
-DEIXIC_EXAMPLES_NODE_PACKAGE=/path/to/evalops-deixic-sdk-0.1.2.tgz \
-DEIXIC_EXAMPLES_PYTHON_WHEEL=/path/to/deixic_sdk-0.1.3-py3-none-any.whl \
+DEIXIC_EXAMPLES_NODE_PACKAGE=/path/to/evalops-deixic-sdk-0.1.4.tgz \
+DEIXIC_EXAMPLES_PYTHON_WHEEL=/path/to/deixic_sdk-0.1.5-py3-none-any.whl \
   node scripts/distribution-validation.mjs --name examples --target .
 ```
