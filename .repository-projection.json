@@ -3,7 +3,7 @@
   "projection": "examples",
   "projectionSchemaVersion": 1,
   "sourceRepository": "dx-corp/mono",
-  "sourceSha": "3a95acea6719539cd068e54ad31208582b6e2bc3",
+  "sourceSha": "c16f3515c56a8ad5f531ab9b7cba7f9493e579bf",
   "destinationRepository": "dx-corp/examples",
   "priorProjectedBase": "d374b5f645e256b269202cd343d532bb8476c8a7",
   "definitionDigest": "ec2a926dbb322ffc1c2329c0b1f56b2b8bc0528c918473ebbcea0ef8234ff2b5",
