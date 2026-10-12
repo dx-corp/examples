@@ -3,11 +3,11 @@
   "projection": "examples",
   "projectionSchemaVersion": 1,
   "sourceRepository": "dx-corp/mono",
-  "sourceSha": "a5293e119fc29a43fef8e2f3fb3e06f8db5a931b",
+  "sourceSha": "5b4fdb8d47e431af15ba78f170b2a4b99774d875",
   "destinationRepository": "dx-corp/examples",
-  "priorProjectedBase": "a9a12977a1118208cd3adef885da0ab62fa9f9cc",
+  "priorProjectedBase": "aa0349ca8b8b3667acde02ed942df9c9d6d009bb",
   "definitionDigest": "ec2a926dbb322ffc1c2329c0b1f56b2b8bc0528c918473ebbcea0ef8234ff2b5",
   "toolDigest": "535e3cb77f0b59898e63a5f097fb3308564bafbc",
-  "contentDigest": "23b0eaad5dacce2a5eaa940f63b1f1fe625d75d9cfd445580287183a5b56d3d1",
+  "contentDigest": "21ec4ecb47f7da12a23e0b0c254a418cd0783e826c1d10bceff7a8fdbb97b233",
   "publicationEligible": true
 }
